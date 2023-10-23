@@ -237,7 +237,7 @@ func main(){
 + Golang没有类（class）， Go的结构体（struct）和其他编程语言的类具有同等地位的
 + 去掉OOP语言的函数重载，构造函数和析构函数、隐藏的this指针等
 + Go仍然有面向对象编程的继承、封装和多态的特性
-### 结构体定义
+### 结构体封装
 ```Go
 type Teacher struct{
     //变量名大写，为公有属性，外界可以访问该变量
@@ -253,7 +253,6 @@ func main(){
 ```
 ### 方法的定义
 + 结构体是值类型，方法采用值传递的形式，需要改变需要传递指针
-+ 
 ```Go
 func (p Person) test(){
 }
@@ -265,6 +264,78 @@ func main(){
     p.Name = "lulu"
     p.test()     
     p.test2()
+}
+```
+### 继承
++ GO采用嵌入匿名结构体的方式，实现继承
++ 结构体可以使用嵌套匿名集结构体中所有字段和方法
++ 如果结构体嵌入两个匿名结构体，如果两个匿名结构体有相同的字段和方法时，在访问时，就必须明确指明匿名结构体名字
++ 如果结构体中嵌入了一个有名的结构体，则为组合
+```GO
+type Student struct{
+    Name string
+    Age int
+    Score int
+}
+
+func (stu *Student) ShowInfo{
+    fmt.Printf("Student name = %v\n", stu.Name)
+}
+
+type Pupil struct{
+    Student 
+}
+
+func main(){
+    graduate := &Pupil{}
+    //采用如下方式调用继承类中的方法， 也可以省略匿名结构体字段访问
+    graduate.Student.Name = "tom"
+    graduate.Student.showInfo() 
+}
+```
+### 接口
++ 接口不能写实现，且不能包含任何变量
++ 接口不能创建实例，但是可以指向一个创建接口的实例
++ 自定义类型就可以实现接口，不需要一定是结构体类型
++ 接口可以继承其他接口，实现必须实现所有的接口方法 
+```GO
+// 声明/定义一个接口
+type Usb interface{
+     Start()
+     Stop()
+}
+
+type Phone struct{
+}
+
+// 让Phone 实现Usb接口的方法
+func (p Phone) start(){
+    fmt.Println("手机开始工作...")
+}
+func (p Phone) Stop(){
+    fmt.Println("手机停止工作...")
+}
+
+// 让Phone 实现Usb接口的方法
+func (c Camera) start(){
+    fmt.Println("手机开始工作...")
+}
+func (c Camera) Stop(){
+    fmt.Println("手机停止工作...")
+}
+
+type Computer struct{
+}
+
+// 编写一个方法working，接受一个usb接口类型变量
+// 只要实现了Usb接口（实现了Usb接口声明所有方法），就能传给接口类型的形参
+func (c Computer) Working(usb Usb){
+    usb.Start()
+    usb.Stop()
+}
+
+func main(){
+
 }
 ```
 ## 协程
@@ -382,4 +453,40 @@ func main(){
 }
 ```
 + `goroutine`中使用`defer + recover`，可以解决程序中出现`panic`导致程序崩溃现象
- 
+## 反射
+```GO
+func test(){
+    defer func(){
+        if err := recover(); err ！= nil{
+            fmt.Println("test() 发生错误", err)
+        }
+    }()
+}
+```
+## 反射
++ 在运行时动态获取变量各种信息，比如变量的类型、类别
++ 如果是结构体变量，还可以获取结构体本身的信息（包括结构体的字段、方法）
++ 通过反射，可以修改变量的值，还可以调用关联的方法
++ 不知道接口调用哪个函数，根据传入参数在运行时确定调用的具体接口
+`fucn bridge(funcPtr interface{}, args ...interface{})` 
+### 反射的重要函数
+`reflect.TypeOf(变量名)`, 获取变量的类型，返回`reflect.Type`类型
+`reflect.ValueOf(变量名)`， 返回`reflect.Value`类型, 是一个结构体类型
++ 变量、`interface{}`和`reflect.Value`可以相互转换
+```GO
+// 变量<--->interface{}<--->reflect.Value
+type Student struct{
+
+}
+
+func test(b interface{}){
+    // interface{}转成 reflect.Value
+    rVal := reflect.ValueOf(b)
+
+    // reflect.Value -> interface{}
+    iVal = rVal.Interface{}
+    
+    //使用类型断言将interface{}转换化为原来变量
+    v := iVal(Student)
+}
+```
